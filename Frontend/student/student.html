@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResiFix – Student Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="student.css" />
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+        </div>
+        <span class="logo-text">ResiFix</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+          </svg>
+          My Requests
+        </a>
+        <a href="#" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          History
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="avatar">A</div>
+          <div>
+            <p class="user-name">Ahmed</p>
+            <p class="user-role">Student</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div class="header-left">
+          <h2 class="page-title">My Requests</h2>
+          <p class="page-subtitle" id="roomSubtitle">Room 204 — Track your maintenance requests</p>
+        </div>
+        <button id="toggleFormBtn" class="btn-new">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          New Request
+        </button>
+      </div>
+
+      <!-- New Request form (hidden by default) -->
+      <div id="requestForm" class="card form-card hidden">
+        <div class="form-card-header">
+          <h3 class="form-card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            Submit a Request
+          </h3>
+          <p class="form-card-desc">Describe the maintenance issue in your room</p>
+        </div>
+
+        <div class="form-card-body">
+          <form id="newRequestForm" novalidate>
+            <div class="form-grid">
+
+              <div class="form-group">
+                <label class="form-label">Room Number</label>
+                <input id="roomNumberInput" type="text" class="form-input is-disabled" disabled />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Problem Type</label>
+                <div class="custom-select-wrapper">
+                  <select id="problemTypeSelect" class="custom-select" required>
+                    <option value="">Select type…</option>
+                  </select>
+                  <svg class="select-chevron" xmlns="http://www.w3.org/2000/svg" width="13" height="13"
+                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="form-group col-span-2">
+                <label class="form-label">Issue Title</label>
+                <input id="titleInput" type="text" class="form-input" placeholder="Brief title…" required />
+              </div>
+
+              <div class="form-group col-span-2">
+                <label class="form-label">Description</label>
+                <textarea id="descriptionInput" class="form-textarea" rows="4"
+                          placeholder="Describe the problem in detail…" required></textarea>
+              </div>
+
+              <div class="form-actions col-span-2">
+                <button type="submit" class="btn-submit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                  Submit
+                </button>
+                <button type="button" id="cancelFormBtn" class="btn-outline">Cancel</button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Requests list -->
+      <div id="requestsList"></div>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <div>
+      <p class="toast-title" id="toastTitle"></p>
+      <p class="toast-body"  id="toastBody"></p>
+    </div>
+  </div>
+
+  <script src="student.js"></script>
+</body>
+</html>
