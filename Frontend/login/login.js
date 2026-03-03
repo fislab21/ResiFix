@@ -1,27 +1,34 @@
-const USERS = [
-  { email: 'ahmed@university.edu', password: 'student123', role: 'student' },
-  { email: 'karim@university.edu', password: 'worker123',  role: 'worker'  },
-  { email: 'admin@university.edu', password: 'admin123',   role: 'admin'   },
-];
+// ─── Login function - sends request to backend ──────────────────────────────
+async function login(email, password) {
+  try {
+    const response = await fetch('../../../backend/Auth/login.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        email: email,
+        password: password,
+      }),
+      credentials: 'same-origin', // Include session cookies
+    });
 
-// ─── Simple login function (mirrors AuthContext.login) ───────────────────────
-function login(email, password) {
-  const user = USERS.find(u => u.email === email && u.password === password);
-  if (!user) return 'Invalid email or password.';
-  localStorage.setItem('current_user', JSON.stringify(user));
-  return null; // no error
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Login error:', error);
+    return { success: false, message: 'Connection error. Please try again.' };
+  }
 }
 
 // ─── Navigation helper ───────────────────────────────────────────────────────
 function navigateTo(role) {
   const routes = {
-    student: '/student',
-    worker:  '/worker',
-    admin:   '/admin',
+    student: '../student/student.html',
+    worker: '../worker/worker.html',
+    admin: '../Admin/admin.html',
   };
-  // In a real multi-page app this would be window.location.href = routes[role]
-  // For the demo we just show an alert.
-  alert(`✅ Logged in as ${role}!\nIn production you would be redirected to: ${routes[role] ?? '/'}`);
+  window.location.href = routes[role] || '../login/login.html';
 }
 
 // ─── Show / hide error ────────────────────────────────────────────────────────
@@ -42,24 +49,22 @@ function clearError() {
 }
 
 // ─── Form submit handler ──────────────────────────────────────────────────────
-document.getElementById('loginForm').addEventListener('submit', function (e) {
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
   e.preventDefault();
   clearError();
 
   const email    = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  const err = login(email, password);
-  if (err) {
-    showError(err);
+  const result = await login(email, password);
+  if (!result.success) {
+    showError(result.message || 'Invalid email or password.');
     return;
   }
 
-  const stored = localStorage.getItem('current_user');
-  if (stored) {
-    const user = JSON.parse(stored);
-    navigateTo(user.role);
-  }
+  // Store user info and redirect
+  localStorage.setItem('current_user', JSON.stringify(result.user));
+  navigateTo(result.user.role);
 });
 
 // ─── Clear error on input change ──────────────────────────────────────────────
