@@ -19,66 +19,86 @@ const STATUS_LABELS = {
   cancelled:   'Cancelled',
 };
 
-/* Current logged-in student (mirrors AuthContext user) */
-const CURRENT_USER = {
-  id:         'u1',
-  name:       'Ahmed Karim',
+const STUDENT_API_URL = '../../backend/student/student.php';
+
+/* Current logged-in student - will be populated from backend */
+let CURRENT_USER = {
+  id:         null,
+  name:       'Loading...',
   role:       'student',
-  roomNumber: '204',
+  roomNumber: 'Loading...',
 };
 
-/* Seed requests belonging to this student */
-let myRequests = [
-  {
-    id: 'req1',
-    title: 'Leaking Faucet in Bathroom',
-    description: 'The bathroom faucet has been dripping constantly for two days, wasting water.',
-    status: 'pending',
-    problemType: 'plumbing',
-    roomNumber: '204',
-    studentId: 'u1',
-    studentName: 'Ahmed Karim',
-    createdAt: '2024-03-10',
-    assignedWorkerId: null,
-    assignedWorkerName: null,
-  },
-  {
-    id: 'req3',
-    title: 'Window Latch Broken',
-    description: 'The window in my room cannot be locked properly. It is a security concern.',
-    status: 'assigned',
-    problemType: 'carpentry',
-    roomNumber: '204',
-    studentId: 'u1',
-    studentName: 'Ahmed Karim',
-    createdAt: '2024-03-08',
-    assignedWorkerId: 'w4',
-    assignedWorkerName: 'Bilal Nour',
-  },
-];
+/* Requests loaded from the backend for this student */
+let myRequests = []; 
+
+/* Fetch current user info from backend */
+async function fetchCurrentUser() {
+  try {
+    const res = await fetch(`${STUDENT_API_URL}?action=user`);
+    const data = await res.json();
+
+    if (data && data.success && data.user) {
+      const user = data.user;
+      CURRENT_USER = {
+        id:         user.id,
+        name:       user.name || 'Student',
+        role:       'student',
+        roomNumber: user.room_number || 'N/A',
+      };
+    } else {
+      showToast('Error', 'Unable to load user information');
+    }
+  } catch (err) {
+    showToast('Error', 'Network error while loading user info');
+  }
+}
 
 /* ID counter for new requests */
 let nextId = 100;
 
-/* =====================================================
-   addRequest  (mirrors addRequest from mockData.ts)
-   ===================================================== */
-function addRequest(data) {
-  const newReq = {
-    id: 'req' + (++nextId),
-    ...data,
-    createdAt: new Date().toISOString().split('T')[0],
-    assignedWorkerId: null,
-    assignedWorkerName: null,
+function mapApiRequest(record) {
+  return {
+    id:                record.id,
+    title:             record.title,
+    description:       record.description,
+    status:            record.status,
+    problemType:       record.problem_type,
+    roomNumber:        record.room_number,
+    studentId:         CURRENT_USER.id,
+    studentName:       CURRENT_USER.name,
+    createdAt:         record.created_at,
+    assignedWorkerId:  null,
+    assignedWorkerName: record.assigned_worker_name || null,
   };
-  myRequests = [newReq, ...myRequests];
-  return newReq;
 }
 
 /* =====================================================
    State
    ===================================================== */
 let showForm = false;
+
+async function loadRequests() {
+  try {
+    const res = await fetch(STUDENT_API_URL);
+    const data = await res.json();
+
+    if (!data || !data.success) {
+      myRequests = [];
+      const message = (data && data.message) || 'Unable to load requests.';
+      showToast('Error', message);
+    } else {
+      myRequests = Array.isArray(data.requests)
+        ? data.requests.map(mapApiRequest)
+        : [];
+    }
+  } catch (err) {
+    myRequests = [];
+    showToast('Error', 'Network error while loading requests.');
+  }
+
+  renderRequests();
+}
 
 /* =====================================================
    Toast helper
@@ -127,7 +147,7 @@ function toggleForm(forceHide) {
 /* =====================================================
    Handle form submit
    ===================================================== */
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
 
   const problemType = document.getElementById('problemTypeSelect').value;
@@ -136,15 +156,30 @@ function handleSubmit(e) {
 
   if (!problemType || !title || !description) return;
 
-  addRequest({
-    studentId:   CURRENT_USER.id,
-    studentName: CURRENT_USER.name,
-    roomNumber:  CURRENT_USER.roomNumber,
-    problemType,
+  const body = new URLSearchParams({
+    room_number:  CURRENT_USER.roomNumber,
+    problem_type: problemType,
     title,
     description,
-    status: 'pending',
   });
+
+  try {
+    const res  = await fetch(STUDENT_API_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body,
+    });
+    const data = await res.json();
+
+    if (!data || !data.success) {
+      const message = (data && data.message) || 'Failed to create request.';
+      showToast('Error', message);
+      return;
+    }
+
+    await loadRequests();
 
   /* Reset form fields */
   document.getElementById('problemTypeSelect').value = '';
@@ -152,8 +187,10 @@ function handleSubmit(e) {
   document.getElementById('descriptionInput').value  = '';
 
   toggleForm(true);
-  renderRequests();
   showToast('Request Submitted', 'Your maintenance request has been sent.');
+  } catch (err) {
+    showToast('Error', 'Network error while creating request.');
+  }
 }
 
 /* =====================================================
@@ -214,11 +251,18 @@ function renderRequests() {
 /* =====================================================
    Init
    ===================================================== */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+
+  /* Fetch user info from backend first */
+  await fetchCurrentUser();
 
   /* Set room subtitle */
   document.getElementById('roomSubtitle').textContent =
     `Room ${CURRENT_USER.roomNumber} — Track your maintenance requests`;
+
+  /* Update user chip in sidebar */
+  const userNameEl = document.querySelector('.user-name');
+  if (userNameEl) userNameEl.textContent = CURRENT_USER.name;
 
   /* Pre-fill disabled room number input */
   document.getElementById('roomNumberInput').value = CURRENT_USER.roomNumber;
@@ -237,6 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cancelFormBtn').addEventListener('click', () => toggleForm(true));
   document.getElementById('newRequestForm').addEventListener('submit', handleSubmit);
 
-  /* Initial render */
-  renderRequests();
+  /* Initial load from backend */
+  loadRequests();
 });
